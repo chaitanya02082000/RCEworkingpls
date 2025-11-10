@@ -21,30 +21,25 @@ import {
 
 const frameworks = [
   {
-    value: "Javascript",
+    value: "javascript",
     label: "Javascript",
   },
   {
-    value: "C++",
+    value: "cpp",
     label: "C++",
   },
   {
-    value: "Java",
+    value: "java",
     label: "Java",
   },
   {
-    value: "remix",
-    label: "Remix",
-  },
-  {
-    value: "astro",
-    label: "Astro",
+    value: "python3",
+    label: "Python",
   },
 ];
 
-export function Combobox() {
+export function Combobox({ value, onChange }) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -63,16 +58,16 @@ export function Combobox() {
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder="Search framework..." />
+          <CommandInput placeholder="Search language..." />
           <CommandList>
-            <CommandEmpty>No framework found.</CommandEmpty>
+            <CommandEmpty>No language found.</CommandEmpty>
             <CommandGroup>
               {frameworks.map((framework) => (
                 <CommandItem
                   key={framework.value}
                   value={framework.value}
                   onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue);
+                    onChange(currentValue === value ? "" : currentValue);
                     setOpen(false);
                   }}
                 >
