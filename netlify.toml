@@ -2,16 +2,17 @@
 command = "npm run build"
 publish = "dist"
 
-# Handle client-side routing (React Router)
-[[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
+# ✅ IMPORTANT:  Proxy redirects MUST come BEFORE the catch-all redirect
 
-# ✅ Proxy API requests to backend - THIS IS THE KEY FIX
+# Proxy all /api/* requests to Render backend
 [[redirects]]
 from = "/api/*"
 to = "https://rceworkingpls.onrender.com/api/: splat"
 status = 200
 force = true
-headers = { X-From = "Netlify" }
+
+# Handle client-side routing (React Router) - MUST be LAST
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
