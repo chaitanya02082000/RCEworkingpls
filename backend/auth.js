@@ -29,8 +29,6 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       enabled: !!process.env.GOOGLE_CLIENT_ID,
-      // ✅ Redirect to frontend after OAuth, not backend
-      redirectURI: `${BASE_URL}/api/auth/callback/google`,
     },
   },
   session: {
@@ -53,12 +51,36 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
 
   advanced: {
-    cookieSameSite: "lax",
-    cookieSecure: IS_PRODUCTION,
-    useSecureCookies: IS_PRODUCTION,
-    // ✅ Use URL state instead of cookie state for OAuth
-    generateState: () => {
-      return crypto.randomUUID();
+    // ✅ Critical changes for cross-domain OAuth
+    cookieSameSite: "none",
+    cookieSecure: true,
+    useSecureCookies: true,
+
+    // ✅ Set cookie domain explicitly (no leading dot)
+    cookieDomain: IS_PRODUCTION ? "rceworkingpls.onrender. com" : undefined,
+
+    // ✅ Disable CSRF for OAuth to work
+    disableCSRFCheck: true,
+
+    // ✅ Where to redirect after successful OAuth
+    defaultCallbackURL: FRONTEND_URL + "/dashboard",
+  },
+
+  // ✅ Add callbacks to debug and handle redirects
+  callbacks: {
+    onOAuthSuccess: async ({ user, session, redirect }) => {
+      console.log("✅ OAuth Success for user:", user.email);
+      // Redirect to frontend dashboard
+      return { redirect: FRONTEND_URL + "/dashboard" };
+    },
+    onOAuthError: async ({ error }) => {
+      console.error("❌ OAuth Error:", error);
+      return {
+        redirect:
+          FRONTEND_URL +
+          "/auth/sign-in? error=" +
+          encodeURIComponent(error.message),
+      };
     },
   },
 });

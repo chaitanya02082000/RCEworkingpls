@@ -1,38 +1,28 @@
 import { createAuthClient } from "better-auth/react";
 
-// ✅ Get API URL from environment
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-console.log("🔧 Auth Client Config:", {
-  baseURL: API_URL,
-  environment: import.meta.env.MODE,
-});
 
 export const authClient = createAuthClient({
   baseURL: API_URL,
-  credentials: "include",
-  fetchOptions: {
-    onError(context) {
-      console.error("❌ Auth error:", context.error);
-      if (context.error.status === 401) {
-        console.log("Unauthorized - session expired");
-      }
-    },
-    onSuccess(context) {
-      console.log("✅ Auth success");
-    },
-  },
+  credentials: "include", // ✅ Important for cookies
 });
 
-export const { signIn, signUp, useSession, signOut } = authClient;
+// ✅ Custom Google sign-in that opens in same window
+export const signInWithGoogle = () => {
+  // Redirect to backend's Google OAuth endpoint
+  window.location.href = `${API_URL}/api/auth/signin/google? callbackURL=${encodeURIComponent(window.location.origin + "/dashboard")}`;
+};
 
+// Re-export hooks
+export const { useSession, signOut } = authClient;
+
+// ✅ Handle sign out
 export const handleSignOut = async (navigate) => {
   try {
-    console.log("🚪 Signing out...");
-    await signOut();
-    window.location.href = "/auth/sign-in";
+    await authClient.signOut();
+    navigate("/auth/sign-in");
   } catch (error) {
-    console.error("Sign out failed:", error);
-    window.location.href = "/auth/sign-in";
+    console.error("Sign out error:", error);
+    navigate("/auth/sign-in");
   }
 };

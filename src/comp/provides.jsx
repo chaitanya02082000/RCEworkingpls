@@ -1,6 +1,8 @@
 import { AuthUIProvider } from "@daveyplate/better-auth-ui";
-import { authClient } from "@/lib/auth-client";
+import { authClient, signInWithGoogle } from "@/lib/auth-client";
 import { useNavigate, NavLink } from "react-router-dom";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export function Providers({ children }) {
   const navigate = useNavigate();
@@ -22,8 +24,17 @@ export function Providers({ children }) {
       Link={NavLink}
       basePath="/auth"
       redirectTo="/dashboard"
+      // ✅ Custom social provider handler
       social={{
         providers: ["google"],
+        // Override the default Google sign-in
+        onSocialSignIn: (provider) => {
+          if (provider === "google") {
+            signInWithGoogle();
+            return false; // Prevent default behavior
+          }
+          return true;
+        },
       }}
       credentials={{
         forgotPassword: true,
@@ -32,8 +43,7 @@ export function Providers({ children }) {
         fields: ["name"],
       }}
       nameRequired={true}
-      // ✅ Add callback URL
-      baseURL={import.meta.env.VITE_API_URL || "http://localhost:3000"}
+      baseURL={API_URL}
     >
       {children}
     </AuthUIProvider>

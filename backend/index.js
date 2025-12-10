@@ -73,7 +73,25 @@ if (process.env.NODE_ENV !== "production") {
     next();
   });
 }
+// ✅ Add this BEFORE the existing auth routes
 
+// Custom Google OAuth start - redirect from frontend
+app.get("/auth/google", (req, res) => {
+  const callbackURL = `${process.env.BASE_URL}/api/auth/callback/google`;
+  res.redirect(
+    `/api/auth/signin/google?callbackURL=${encodeURIComponent(callbackURL)}`,
+  );
+});
+
+// Handle OAuth callback and redirect to frontend with session
+app.get("/oauth-success", async (req, res) => {
+  // After successful OAuth, redirect to frontend
+  const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+  res.redirect(FRONTEND_URL + "/dashboard");
+});
+
+// Better Auth routes (keep this existing line)
+app.all("/api/auth/*", toNodeHandler(auth));
 // Health check
 app.get("/health", (req, res) => {
   res.json({
