@@ -2,7 +2,7 @@
 command = "npm run build"
 publish = "dist"
 
-# Proxy API requests to Render backend (NO SPACE in : splat)
+# Proxy API requests to Render backend (includes /api/auth/*)
 [[redirects]]
 from = "/api/*"
 to = "https://rceworkingpls.onrender.com/api/:splat"
@@ -16,14 +16,7 @@ to = "https://rceworkingpls.onrender.com/health"
 status = 200
 force = true
 
-# Proxy auth endpoints
-[[redirects]]
-from = "/auth/*"
-to = "https://rceworkingpls.onrender.com/auth/:splat"
-status = 200
-force = true
-
-# Handle React Router (MUST be LAST)
+# Handle React Router - ALL other routes go to index.html (MUST be LAST)
 [[redirects]]
 from = "/*"
 to = "/index.html"
