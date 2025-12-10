@@ -5,6 +5,7 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+// ✅ In production, use the Netlify URL as BASE_URL since we're proxying
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -47,40 +48,18 @@ export const auth = betterAuth({
     "https://rcecod.netlify.app",
     "https://rceworkingpls.onrender.com",
   ].filter(Boolean),
-  baseURL: BASE_URL,
+  // ✅ CRITICAL: Use Netlify URL as baseURL for OAuth callbacks
+  baseURL: IS_PRODUCTION ? "https://rcecod.netlify.app" : BASE_URL,
   secret: process.env.BETTER_AUTH_SECRET,
 
   advanced: {
-    // ✅ Critical changes for cross-domain OAuth
-    cookieSameSite: "none",
-    cookieSecure: true,
-    useSecureCookies: true,
-
-    // ✅ Set cookie domain explicitly (no leading dot)
-    cookieDomain: IS_PRODUCTION ? "rceworkingpls.onrender. com" : undefined,
-
-    // ✅ Disable CSRF for OAuth to work
-    disableCSRFCheck: true,
-
-    // ✅ Where to redirect after successful OAuth
-    defaultCallbackURL: FRONTEND_URL + "/dashboard",
-  },
-
-  // ✅ Add callbacks to debug and handle redirects
-  callbacks: {
-    onOAuthSuccess: async ({ user, session, redirect }) => {
-      console.log("✅ OAuth Success for user:", user.email);
-      // Redirect to frontend dashboard
-      return { redirect: FRONTEND_URL + "/dashboard" };
-    },
-    onOAuthError: async ({ error }) => {
-      console.error("❌ OAuth Error:", error);
-      return {
-        redirect:
-          FRONTEND_URL +
-          "/auth/sign-in? error=" +
-          encodeURIComponent(error.message),
-      };
-    },
+    // ✅ Use "lax" since we're now same-origin via proxy
+    cookieSameSite: "lax",
+    cookieSecure: IS_PRODUCTION,
+    useSecureCookies: IS_PRODUCTION,
+    clearSessionTokenOnSignOut: true,
+    // ✅ No need for cross-domain settings anymore
+    crossSubdomainCookie: false,
+    disableCSRFCheck: false,
   },
 });
