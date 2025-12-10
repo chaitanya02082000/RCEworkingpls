@@ -6,7 +6,11 @@ import { auth } from "./auth.js";
 import dotenv from "dotenv";
 import snippetRoutes from "./routes/snippets.js";
 import judge0Service from "./services/judge0.js";
-
+import {
+  errorHandler,
+  AppError,
+  asyncHandler,
+} from "./middleware/errorHandler.js";
 dotenv.config();
 
 const app = express();
@@ -36,7 +40,7 @@ app.use(
       if (isAllowed) {
         callback(null, true);
       } else {
-        console.warn("❌ CORS blocked origin:", origin);
+        console.warn(" CORS blocked origin:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -54,12 +58,12 @@ app.use(
   }),
 );
 
-// ✅ Handle preflight requests explicitly
+//  Handle preflight requests explicitly
 app.options("*", cors());
 
 app.use(cookieParser());
 
-// ✅ Trust proxy for production (Render/Netlify use proxies)
+//  Trust proxy for production (Render/Netlify use proxies)
 app.set("trust proxy", 1);
 
 // Request logging
@@ -122,6 +126,49 @@ app.get("/", (req, res) => {
     return res.redirect(FRONTEND_URL + "/dashboard");
   }
 
+  // Code execution endpoint with better error handling
+  app.post(
+    "/api/execute",
+    asyncHandler(async (req, res) => {
+      const { code, language, stdin } = req.body;
+
+      if (!code) {
+        throw new AppError("Code is required", 400, "MISSING_CODE");
+      }
+
+      if (!language) {
+        throw new AppError("Language is required", 400, "MISSING_LANGUAGE");
+      }
+
+      const supportedLanguages = [
+        "javascript",
+        "python",
+        "python3",
+        "java",
+        "cpp",
+        "c",
+      ];
+      if (!supportedLanguages.includes(language.toLowerCase())) {
+        throw new AppError(
+          `Unsupported language: ${language}.  Supported:  ${supportedLanguages.join(", ")}`,
+          400,
+          "UNSUPPORTED_LANGUAGE",
+        );
+      }
+
+      const result = await judge0Service.execute(code, language, stdin || "");
+
+      res.json({
+        success: true,
+        output: result.output,
+        executionTime: new Date().toISOString(),
+        stats: {
+          time: result.time,
+          memory: result.memory,
+        },
+      });
+    }),
+  );
   res.json({
     status: "Code Executor API",
     version: "1.0.0",
@@ -233,16 +280,16 @@ app.use((err, req, res, next) => {
     timestamp: new Date().toISOString(),
   });
 });
-
+app.use(errorHandler);
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 
 app.listen(Number(PORT), HOST, () => {
-  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🌐 CORS enabled for: ${FRONTEND_URL}`);
-  console.log(`🔐 Auth endpoints: /api/auth/*`);
-  console.log(`📝 Snippet endpoints: /api/snippets`);
+  console.log(` Server running on http://${HOST}:${PORT}`);
+  console.log(` Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(` CORS enabled for: ${FRONTEND_URL}`);
+  console.log(` Auth endpoints: /api/auth/*`);
+  console.log(` Snippet endpoints: /api/snippets`);
   console.log(
     `⚖️  Judge0 API: ${process.env.JUDGE0_API_URL || "Not configured"}`,
   );
