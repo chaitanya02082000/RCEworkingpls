@@ -53,15 +53,12 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
 
   advanced: {
-    // ✅ CRITICAL FIX: Use "lax" instead of "none" for OAuth state cookies
     cookieSameSite: "lax",
     cookieSecure: IS_PRODUCTION,
     useSecureCookies: IS_PRODUCTION,
-    clearSessionTokenOnSignOut: true,
-    crossSubdomainCookie: false,
-    // ✅ Keep CSRF disabled for cross-domain
-    disableCSRFCheck: IS_PRODUCTION,
-    // ✅ Add default redirect after OAuth
-    defaultCallbackURL: FRONTEND_URL + "/dashboard",
+    // ✅ Use URL state instead of cookie state for OAuth
+    generateState: () => {
+      return crypto.randomUUID();
+    },
   },
 });
