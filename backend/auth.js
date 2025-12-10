@@ -29,7 +29,8 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       enabled: !!process.env.GOOGLE_CLIENT_ID,
-      callbackURL: `${BASE_URL}/api/auth/callback/google`,
+      // ✅ Redirect to frontend after OAuth, not backend
+      redirectURI: `${BASE_URL}/api/auth/callback/google`,
     },
   },
   session: {
@@ -45,22 +46,22 @@ export const auth = betterAuth({
     BASE_URL,
     "http://localhost:5173",
     "http://localhost:3000",
+    "https://rcecod.netlify.app",
+    "https://rceworkingpls.onrender.com",
   ].filter(Boolean),
   baseURL: BASE_URL,
   secret: process.env.BETTER_AUTH_SECRET,
-  // ✅ CRITICAL: Fix cookie settings for cross-domain
+
   advanced: {
-    // SameSite=None required for cross-domain cookies
-    cookieSameSite: IS_PRODUCTION ? "none" : "lax",
-    // Secure=true required when SameSite=None
+    // ✅ CRITICAL FIX: Use "lax" instead of "none" for OAuth state cookies
+    cookieSameSite: "lax",
     cookieSecure: IS_PRODUCTION,
-    // Use secure cookies in production
     useSecureCookies: IS_PRODUCTION,
-    // Clear tokens on sign out
     clearSessionTokenOnSignOut: true,
-    // ✅ Add cross-origin settings
     crossSubdomainCookie: false,
-    // ✅ Disable CSRF for cross-domain (be careful!)
+    // ✅ Keep CSRF disabled for cross-domain
     disableCSRFCheck: IS_PRODUCTION,
+    // ✅ Add default redirect after OAuth
+    defaultCallbackURL: FRONTEND_URL + "/dashboard",
   },
 });
